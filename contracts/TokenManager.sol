@@ -10,6 +10,8 @@ contract TokenManager {
 
   modifier isIcoPeriod(uint256 _icoEnd) { require(_icoEnd >= now); _; }
 
+  event tokenCreation(address indexed tokenAddress);
+
   struct Offer {
     uint256 amount;
     uint256 price;
@@ -44,6 +46,7 @@ contract TokenManager {
                                      );
 
       tokens[newTokenAddress].creator = msg.sender;
+      emit tokenCreation(newTokenAddress);
   }
 
   function approveManager(ERC20 _tokenAddress) public {
