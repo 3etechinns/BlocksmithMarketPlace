@@ -1,10 +1,9 @@
 pragma solidity ^0.4.24;
 
 import "./Ownable.sol";
-import "../libraries/SafeMath.sol";
 
+/** @title ERC20 extended token */
 contract ERC20 is Ownable {
-    using SafeMath for uint256;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -33,6 +32,10 @@ contract ERC20 is Ownable {
 
     address public creator;
 
+    string public thumbnail;
+
+    string public description;
+
     constructor (
         string _name,
         uint8 _decimals,
@@ -40,7 +43,9 @@ contract ERC20 is Ownable {
         uint256 _icoEnd,
         uint256 _initialPrice,
         uint256 _totalSupply,
-        address _creator
+        address _creator,
+        string _thumbnail,
+        string _description
     )
     {
       name = _name;
@@ -50,6 +55,8 @@ contract ERC20 is Ownable {
       initialPrice = _initialPrice;
       totalSupply = _totalSupply;
       creator = _creator;
+      thumbnail = _thumbnail;
+      description = _description;
       balances[creator] = _totalSupply;
     }
 
@@ -62,20 +69,20 @@ contract ERC20 is Ownable {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender].sub(_value);
-        balances[_to].add(_value);
+        require(balances[msg.sender] - lockedBalances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
+        require(balances[_from] - lockedBalances[msg.sender] >= _value && allowance >= _value);
         balances[_to] += _value;
         balances[_from] -= _value;
         if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender].sub(_value);
+            allowed[_from][msg.sender] -= _value;
         }
         emit Transfer(_from, _to, _value);
         return true;

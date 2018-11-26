@@ -35,7 +35,9 @@ contract('TokenManager', function(accounts) {
         symbol: 'BS',
         icoEnd: Math.floor(icoStart + icoPeriodTime),
         initialPrice: 100000000000000000, //0.1 ETH
-        totalSupply: 100
+        totalSupply: 100,
+        thumbnail: "QmeEuzAxrQB9ueXRb9QX9UUzUZMDB9EKeWoKdDFn1KsTQk",
+        description: "QmY26Pa9cKqyY8FJbq7KSz7NYumkBmf5odYsLxC72ZQxHv"
       }
 
       this.TokenManager.createToken(
@@ -45,6 +47,8 @@ contract('TokenManager', function(accounts) {
         this.tokenValues.icoEnd,
         this.tokenValues.initialPrice,
         this.tokenValues.totalSupply,
+        this.tokenValues.thumbnail,
+        this.tokenValues.description,
         { from: this.creator }
       );
 
@@ -63,27 +67,6 @@ contract('TokenManager', function(accounts) {
     });
   });
 
-  // after("Time travel back to the past before ICO starts", async () => {
-  //   await this.timeTravel(this.icoStart);
-  //
-  //   this.mineBlock = function(time) {
-  //     return new Promise((resolve, reject) => {
-  //         web3.currentProvider.sendAsync({
-  //         jsonrpc: "2.0",
-  //         method: "evm_mine",
-  //         params: [],
-  //         id: new Date().getSeconds()
-  //       }, (err, result) => {
-  //         if(err){ return reject(err) }
-  //         return resolve(result)
-  //       });
-  //     });
-  //   };
-  //   console.log("Ejecuto en after");
-  //   await this.mineBlock();
-  // });
-
-
   it("User creates a Token", async () => {
 
     const name = await this.Token.name();
@@ -92,6 +75,8 @@ contract('TokenManager', function(accounts) {
     const icoEnd = await this.Token.icoEnd();
     const initialPrice = await this.Token.initialPrice();
     const totalSupply = await this.Token.totalSupply();
+    const thumbnail = await this.Token.thumbnail();
+    const description = await this.Token.description();
 
     const tokenValues = {
       name: name,
@@ -99,7 +84,9 @@ contract('TokenManager', function(accounts) {
       symbol: symbol,
       icoEnd: icoEnd.toNumber(),
       initialPrice: initialPrice.toNumber(),
-      totalSupply: totalSupply.toNumber()
+      totalSupply: totalSupply.toNumber(),
+      thumbnail: thumbnail,
+      description: description
     }
 
     assert.deepEqual(this.tokenValues, tokenValues, "User couldn't create a Token properly");
