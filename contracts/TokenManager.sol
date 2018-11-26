@@ -8,9 +8,24 @@ contract TokenManager {
 
   using SafeMath for uint256;
 
-  modifier isIcoPeriod(uint256 _icoEnd) { require(_icoEnd >= now); _; }
+  modifier isIcoPeriod(uint256 _icoEnd) {
+    require(_icoEnd > now, "ICO period already finished");
+    _;
+  }
 
-  event tokenCreation(address indexed tokenAddress);
+  modifier isNotIcoPeriod(uint256 _icoEnd) {
+    require(_icoEnd <= now, "Is still ICO period");
+    _;
+  }
+
+  event tokenCreation(address indexed _tokenAddress, address indexed _creator);
+
+  event tokenOfferPublished(
+      address indexed _tokenAddress,
+      address indexed _seller,
+      uint256 _amount,
+      uint256 _price
+    );
 
   struct Offer {
     uint256 amount;
@@ -23,7 +38,20 @@ contract TokenManager {
   }
 
   mapping(address => Token) tokens;
-  mapping(address => uint256) creatorsBalances;
+  mapping(address => uint256) balances;
+
+  function sellOffers(
+      address _tokenAddress,
+      address _owner
+  )
+      view
+      public
+      returns(uint256, uint256)
+  {
+    uint amount = tokens[_tokenAddress].resellers[_owner].amount;
+    uint price = tokens[_tokenAddress].resellers[_owner].price;
+    return(amount, price);
+  }
 
   function createToken(
       string _name,
@@ -36,22 +64,17 @@ contract TokenManager {
       public
   {
       address newTokenAddress = new ERC20(
-                                        _name,
-                                        _decimals,
-                                        _symbol,
-                                        _IcoEnd,
-                                        _initialPrice,
-                                        _totalSupply,
-                                        msg.sender
-                                     );
+        _name,
+        _decimals,
+        _symbol,
+        _IcoEnd,
+        _initialPrice,
+        _totalSupply,
+        msg.sender
+      );
 
       tokens[newTokenAddress].creator = msg.sender;
-      emit tokenCreation(newTokenAddress);
-  }
-
-  function approveManager(ERC20 _tokenAddress) public {
-    uint totalSupply = _tokenAddress.totalSupply();
-    _tokenAddress.approve(address(this), totalSupply);
+      emit tokenCreation(newTokenAddress, msg.sender);
   }
 
   function buyTokenIcoPeriod(
@@ -65,12 +88,46 @@ contract TokenManager {
       uint initalPrice = _tokenAddress.initialPrice();
       uint totalAmount = initalPrice.mul(_units);
       address creator = _tokenAddress.creator();
-      require(msg.value >= totalAmount);
+      require(msg.value >= totalAmount, "Buyer does not send enough ETH for ICO purchase");
       _tokenAddress.transferFrom(creator, msg.sender, _units);
-      creatorsBalances[creator].add(msg.value);
+      balances[creator].add(msg.value);
   }
 
-  /* function withdrawCreatorBalance() {
+  function sellTokens(
+      ERC20 _tokenAddress,
+      uint256 _amount,
+      uint256 _price
+  )
+      public
+      isNotIcoPeriod(_tokenAddress.icoEnd())
+  {
+      tokens[_tokenAddress].resellers[msg.sender].amount = _amount;
+      tokens[_tokenAddress].resellers[msg.sender].price = _price;
+      _tokenAddress.lockBalance(msg.sender, _amount);
+
+      emit tokenOfferPublished(_tokenAddress, msg.sender, _amount, _price);
+  }
+
+  /* function buyTokens(
+      address _tokenAddress,
+      address _seller
+  )
+      public
+      isNotIcoPeriod(_tokenAddress.icoEnd())
+  {
+      uint price = tokens[_tokenAddress].resellers[_seller].price;
+      uint amount = tokens[_tokenAddress].resellers[_seller].amount;
+      require(msg.value >= price.mul(amount));
+      _tokenAddress.
+
+      tokens[_tokenAddress].resellers[_seller].price = 0;
+      tokens[_tokenAddress].resellers[_seller].amount = 0;
+
+  } */
+
+
+
+  /* function withdrawBalance() {
 
   } */
 
