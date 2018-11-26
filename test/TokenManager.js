@@ -178,12 +178,40 @@ contract('TokenManager', function(accounts) {
       "Seller couldn't place a sell action properly - 2"
     );
 
-    const sellOffer = await this.TokenManager.sellOffers(this.newTokenAddress, this.buyerICO);
+    const sellOrder = await this.TokenManager.sellOrders(this.newTokenAddress, this.buyerICO);
 
     assert.deepEqual(
-      [sellOffer[0].toNumber(), sellOffer[1].toNumber()],
+      [sellOrder[0].toNumber(), sellOrder[1].toNumber()],
       [amountToSell, priceToSell],
       "Seller couldn't place a sell action properly - 3"
+    )
+  });
+
+  it("User cancel a selling order", async () => {
+
+    const buyerICOBalance = await this.Token.balances(this.buyerICO);
+    const buyerICOlockedBalance = await this.Token.lockedBalances(this.buyerICO);
+    const sellOrder = await this.TokenManager.sellOrders(this.newTokenAddress, this.buyerICO);
+
+    await this.TokenManager.cancelSellOrder(this.newTokenAddress, {from: this.buyerICO});
+
+    const newBuyerICOBalance = await this.Token.balances(this.buyerICO);
+    const newBuyerICOlockedBalance = await this.Token.lockedBalances(this.buyerICO);
+    const removedSellOrder = await this.TokenManager.sellOrders(this.newTokenAddress, this.buyerICO);
+
+    assert.deepEqual(
+      [0, 0],
+      [removedSellOrder[0].toNumber(), removedSellOrder[1].toNumber()],
+      "Sell order has not been removed properly - 1"
+    )
+
+    assert.deepEqual(
+      {balance: newBuyerICOBalance.toNumber(), locked: newBuyerICOlockedBalance.toNumber()},
+      {
+        balance: buyerICOBalance.toNumber() + sellOrder[0].toNumber(),
+        locked: buyerICOlockedBalance.toNumber() - sellOrder[0].toNumber()
+      },
+      "Sell order has not been removed properly - 2"
     )
   });
 });

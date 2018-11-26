@@ -20,37 +20,49 @@ contract TokenManager {
 
   event tokenCreation(address indexed _tokenAddress, address indexed _creator);
 
-  event tokenOfferPublished(
+  event tokenOrderPublished(
       address indexed _tokenAddress,
       address indexed _seller,
+      uint256 indexed _orderId,
       uint256 _amount,
       uint256 _price
-    );
+  );
 
-  struct Offer {
+  event tokenOrderCanceled(
+      address indexed _tokenAddress,
+      address indexed _seller,
+      uint256 indexed _orderId
+  );
+
+  struct Order {
     uint256 amount;
     uint256 price;
+    uint256 id;
   }
+
+  uint256 orderId = 1;
 
   struct Token {
     address creator;
-    mapping(address => Offer) resellers;
+    mapping(address => Order) resellers;
   }
 
   mapping(address => Token) tokens;
   mapping(address => uint256) balances;
 
-  function sellOffers(
+
+  function sellOrders(
       address _tokenAddress,
       address _owner
   )
       view
       public
-      returns(uint256, uint256)
+      returns(uint256, uint256, uint256)
   {
     uint amount = tokens[_tokenAddress].resellers[_owner].amount;
     uint price = tokens[_tokenAddress].resellers[_owner].price;
-    return(amount, price);
+    uint id = tokens[_tokenAddress].resellers[_owner].id;
+    return(amount, price, id);
   }
 
   function createToken(
@@ -103,9 +115,21 @@ contract TokenManager {
   {
       tokens[_tokenAddress].resellers[msg.sender].amount = _amount;
       tokens[_tokenAddress].resellers[msg.sender].price = _price;
+      tokens[_tokenAddress].resellers[msg.sender].id = orderId;
       _tokenAddress.lockBalance(msg.sender, _amount);
+      emit tokenOrderPublished(_tokenAddress, msg.sender, orderId, _amount, _price);
+      orderId.add(1);
+  }
 
-      emit tokenOfferPublished(_tokenAddress, msg.sender, _amount, _price);
+  function cancelSellOrder(ERC20 _tokenAddress) public {
+    (uint256 amount, uint256 price, uint256 id) = sellOrders(_tokenAddress, msg.sender);
+    require(id != 0, "That selling order does not exist and can not be canceled");
+    delete tokens[_tokenAddress].resellers[msg.sender];
+    /* tokens[_tokenAddress].resellers[msg.sender].amount = 0;
+    tokens[_tokenAddress].resellers[msg.sender].price = 0;
+    tokens[_tokenAddress].resellers[msg.sender].id = 0; */
+    _tokenAddress.unlockBalance(msg.sender, amount);
+    emit tokenOrderCanceled(_tokenAddress, msg.sender, id);
   }
 
   /* function buyTokens(
