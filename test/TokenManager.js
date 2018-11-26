@@ -214,4 +214,71 @@ contract('TokenManager', function(accounts) {
       "Sell order has not been removed properly - 2"
     )
   });
+
+
+  it("User buys tokens from a selling order", async () => {
+    //Seller has to place the selling order again because it had been canceled
+    const amountToSell = 10;
+    const priceToSell = this.tokenValues.initialPrice * 2;
+
+    const buyerICOBalance = await this.Token.balances(this.buyerICO);
+    const buyerICOlockedBalance = await this.Token.lockedBalances(this.buyerICO);
+
+    await this.TokenManager.sellTokens(
+      this.newTokenAddress,
+      amountToSell,
+      priceToSell,
+      {from: this.buyerICO}
+    );
+
+    //Seller has to approve first to Manager to sell his tokens for ETH
+    await this.Token.approve(
+      this.TokenManager.address,
+      this.tokenValues.totalSupply,
+      {from: this.buyerICO}
+    );
+
+    //Other user accept the selling order and buy the tokens
+    const buyerPostICOBalance = await this.Token.balances(this.buyerPostICO);
+
+    await this.TokenManager.buyTokens(
+      this.newTokenAddress,
+      this.buyerICO,
+      {from: this.buyerPostICO, value: amountToSell * priceToSell}
+    );
+
+    const newBuyerICOBalance = await this.Token.balances(this.buyerICO);
+    const newBuyerICOlockedBalance = await this.Token.lockedBalances(this.buyerICO);
+    const newBuyerPostICOBalance = await this.Token.balances(this.buyerPostICO);
+
+    assert.equal(
+      buyerPostICOBalance.toNumber() + amountToSell,
+      newBuyerPostICOBalance.toNumber(),
+      "User could not buy tokens from a selling offer - 1"
+    );
+
+    assert.equal(
+      buyerICOBalance.toNumber() - amountToSell,
+      newBuyerICOBalance.toNumber(),
+      "User could not buy tokens from a selling offer - 2"
+    );
+
+    assert.equal(
+      0,
+      newBuyerICOlockedBalance.toNumber(),
+      "User could not buy tokens from a selling offer - 3"
+    );
+  });
+
+  it("Token creator withdraw ICO benefits (ETH)", async () => {
+    const marketBalance = await this.TokenManager.balances(this.creator);
+    console.log(marketBalance.toNumber());
+    await this.TokenManager.withdrawBalance(marketBalance, {from: this.creator});
+  });
+
+  it("Reseller withdraw token sales benefits (ETH)", async () => {
+    const marketBalance = await this.TokenManager.balances(this.buyerICO);
+    console.log(marketBalance.toNumber());
+    await this.TokenManager.withdrawBalance(marketBalance, {from: this.buyerICO});
+  });
 });
