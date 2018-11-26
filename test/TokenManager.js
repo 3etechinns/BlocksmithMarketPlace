@@ -271,14 +271,40 @@ contract('TokenManager', function(accounts) {
   });
 
   it("Token creator withdraw ICO benefits (ETH)", async () => {
-    const marketBalance = await this.TokenManager.balances(this.creator);
-    console.log(marketBalance.toNumber());
-    await this.TokenManager.withdrawBalance(marketBalance, {from: this.creator});
+    let marketBalance = await this.TokenManager.balances(this.creator);
+    marketBalance = marketBalance.toNumber();
+    let initialAccountBalance = await web3.eth.getBalance(this.creator);
+    initialAccountBalance = initialAccountBalance.toNumber();
+    const tx = await this.TokenManager.withdrawBalance(marketBalance, {from: this.creator});
+    const transactionCost = tx.receipt.gasUsed * 10000000000;
+
+    const expectedFinalAccountBalance = initialAccountBalance - transactionCost + marketBalance;
+    let finalAccountBalance = await web3.eth.getBalance(this.creator);
+    finalAccountBalance = finalAccountBalance.toNumber();
+
+    assert.equal(
+      finalAccountBalance,
+      expectedFinalAccountBalance,
+      "The user didn't withdraw the prize properly"
+    )
   });
 
   it("Reseller withdraw token sales benefits (ETH)", async () => {
-    const marketBalance = await this.TokenManager.balances(this.buyerICO);
-    console.log(marketBalance.toNumber());
-    await this.TokenManager.withdrawBalance(marketBalance, {from: this.buyerICO});
+    let marketBalance = await this.TokenManager.balances(this.buyerICO);
+    marketBalance = marketBalance.toNumber();
+    let initialAccountBalance = await web3.eth.getBalance(this.buyerICO);
+    initialAccountBalance = initialAccountBalance.toNumber();
+    const tx = await this.TokenManager.withdrawBalance(marketBalance, {from: this.buyerICO});
+    const transactionCost = tx.receipt.gasUsed * 10000000000;
+
+    const expectedFinalAccountBalance = initialAccountBalance - transactionCost + marketBalance;
+    let finalAccountBalance = await web3.eth.getBalance(this.buyerICO);
+    finalAccountBalance = finalAccountBalance.toNumber();
+
+    assert.equal(
+      finalAccountBalance,
+      expectedFinalAccountBalance,
+      "The user didn't withdraw the prize properly"
+    )
   });
 });

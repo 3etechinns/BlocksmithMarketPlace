@@ -1,6 +1,5 @@
 pragma solidity ^0.4.24;
 
-import "./IERC20.sol";
 import "./Ownable.sol";
 import "../libraries/SafeMath.sol";
 

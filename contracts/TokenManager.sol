@@ -58,8 +58,8 @@ contract TokenManager {
         mapping(address => Order) resellers;
     }
 
-    mapping(address => Token) tokens;
-    mapping(address => uint256) balances;
+    mapping(address => Token) public tokens;
+    mapping(address => uint256) public balances;
 
 
     function sellOrders(
@@ -116,7 +116,7 @@ contract TokenManager {
           "Buyer does not send enough ETH for ICO purchase"
         );
         _tokenAddress.transferFrom(creator, msg.sender, _amount);
-        balances[creator].add(msg.value);
+        balances[creator] += msg.value;
         emit tokenICOPurchased(_tokenAddress, msg.sender, _amount);
     }
 
@@ -161,7 +161,7 @@ contract TokenManager {
         _tokenAddress.transferFrom(_seller, msg.sender, amount);
         _tokenAddress.unlockBalance(_seller, amount);
         delete tokens[_tokenAddress].resellers[_seller];
-        balances[msg.sender].add(msg.value);
+        balances[_seller] += msg.value;
         emit tokenOrderPurchased(_tokenAddress, msg.sender, id);
     }
 
