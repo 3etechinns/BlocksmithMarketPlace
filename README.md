@@ -3,7 +3,7 @@
   * Truffle 4.1.13
   * Ganache-cli 6.1.6
 
-Truffle project
+How to run the Truffle project
   * `$ ganache-cli`
   * `$ truffle test`
 
@@ -16,4 +16,4 @@ tokens from the asset owner. He should later be able to sell them to other parti
 ether whenever he chooses to capitalise gains or reduce losses.
 
 # Architecture
-[[https://github.com/username/repository/blob/master/BlacksmithArchitecture.jpg]]
+![Architecture](/BlacksmithArchitecture.jpg)
